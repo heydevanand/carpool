@@ -3,8 +3,17 @@ let currentRideId = null;
 // Set minimum datetime to current time
 document.addEventListener('DOMContentLoaded', function() {
     const now = new Date();
-    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-    document.getElementById('departureTime').min = now.toISOString().slice(0, 16);
+    // Format for datetime-local input (YYYY-MM-DDTHH:MM)
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    
+    const minDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
+    document.getElementById('departureTime').min = minDateTime;
+    
+    refreshRides();
 });
 
 // Create ride form submission
@@ -112,9 +121,7 @@ async function refreshRides() {
                 </div>
             `;
             return;
-        }
-
-        container.innerHTML = rides.map(ride => {
+        }        container.innerHTML = rides.map(ride => {
             const departureTime = new Date(ride.departureTime);
             const availableSeats = ride.maxPassengers - ride.passengers.length;
             const isAvailable = availableSeats > 0;
@@ -123,7 +130,7 @@ async function refreshRides() {
                 <div class="card ride-card ${isAvailable ? 'available' : 'full'}">
                     <div class="card-body">
                         <div class="row align-items-center">
-                            <div class="col-md-6">
+                            <div class="col-md-8">
                                 <div class="d-flex align-items-center mb-2">
                                     <span class="badge bg-primary time-badge me-2">
                                         ${departureTime.toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit'})}
@@ -132,7 +139,7 @@ async function refreshRides() {
                                         ${departureTime.toLocaleDateString('en-US', {month: 'short', day: 'numeric'})}
                                     </small>
                                 </div>
-                                <div class="route-info">
+                                <div class="route-info mb-2">
                                     <div class="location-text">
                                         <i class="fas fa-map-marker-alt text-success"></i>
                                         <strong>From:</strong> ${ride.origin.name}
@@ -141,9 +148,27 @@ async function refreshRides() {
                                         <i class="fas fa-map-marker-alt text-danger"></i>
                                         <strong>To:</strong> ${ride.destination.name}
                                     </div>
-                                </div>
+                                </div>                                ${ride.passengers.length > 0 ? `
+                                    <div class="contact-info">
+                                        <div class="passengers-info">
+                                            <small class="text-muted">
+                                                <i class="fas fa-users"></i> <strong>Passengers:</strong>
+                                            </small>
+                                            ${ride.passengers.map(passenger => `
+                                                <div class="ms-3">
+                                                    <small class="text-muted">
+                                                        ${passenger.name} 
+                                                        <a href="tel:${passenger.phone}" class="text-decoration-none">
+                                                            <i class="fas fa-phone"></i> ${passenger.phone}
+                                                        </a>
+                                                    </small>
+                                                </div>
+                                            `).join('')}
+                                        </div>
+                                    </div>
+                                ` : ''}
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-2">
                                 <div class="text-center">
                                     <div class="passenger-count">
                                         <i class="fas fa-users"></i>
@@ -154,7 +179,7 @@ async function refreshRides() {
                                     </small>
                                 </div>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-2">
                                 ${isAvailable ? 
                                     `<button class="btn btn-primary btn-sm w-100" onclick="joinRide('${ride._id}')">
                                         <i class="fas fa-plus"></i> Join Ride

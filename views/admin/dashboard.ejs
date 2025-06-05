@@ -34,15 +34,21 @@
         }
     </style>
 </head>
-<body class="bg-light">
-    <nav class="navbar navbar-dark bg-primary">
+<body class="bg-light">    <nav class="navbar navbar-dark bg-primary">
         <div class="container">
             <a class="navbar-brand" href="/">
                 <i class="fas fa-car"></i> PG Carpool - Admin
-            </a>
-            <div>
+            </a>            <div class="d-flex align-items-center">
+                <% if (typeof admin !== 'undefined' && admin) { %>
+                    <span class="text-light me-3">
+                        <i class="fas fa-user-shield"></i> Welcome, <%= admin.username %>
+                    </span>
+                <% } %>
                 <a href="/" class="btn btn-outline-light btn-sm me-2">User View</a>
-                <a href="/admin/locations" class="btn btn-outline-light btn-sm">Manage Locations</a>
+                <a href="/admin/locations" class="btn btn-outline-light btn-sm me-2">Manage Locations</a>
+                <a href="/admin/logout" class="btn btn-outline-danger btn-sm">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
             </div>
         </div>
     </nav>

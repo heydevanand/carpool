@@ -27,8 +27,7 @@
         .time-badge {
             font-size: 0.9rem;
             font-weight: 600;
-        }
-        .location-text {
+        }        .location-text {
             font-size: 0.9rem;
             color: #6c757d;
         }
@@ -37,6 +36,27 @@
             border-radius: 20px;
             padding: 0.25rem 0.75rem;
             font-size: 0.8rem;
+        }        .contact-info {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 0.5rem;
+            margin-top: 0.5rem;
+        }
+        .contact-info a {
+            color: #28a745;
+            text-decoration: none;
+        }
+        .contact-info a:hover {
+            color: #1e7e34;
+            text-decoration: underline;
+        }
+        .passengers-info {
+            padding-top: 0.25rem;
+        }
+        .passengers-info .ms-3 {
+            border-left: 2px solid #e9ecef;
+            padding-left: 0.5rem;
+            margin-bottom: 0.25rem;
         }
     </style>
 </head>
@@ -135,15 +155,14 @@
                     <div class="card-header">
                         <h5><i class="fas fa-plus-circle"></i> Create New Ride</h5>
                     </div>
-                    <div class="card-body">
-                        <form id="create-ride-form">
+                    <div class="card-body">                        <form id="create-ride-form">
                             <div class="mb-3">
                                 <label class="form-label">Your Name</label>
-                                <input type="text" class="form-control" id="creatorName" required>
+                                <input type="text" class="form-control" id="creatorName" required placeholder="Enter your name">
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Phone Number</label>
-                                <input type="tel" class="form-control" id="creatorPhone" required>
+                                <input type="tel" class="form-control" id="creatorPhone" required placeholder="Contact number">
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">From</label>
