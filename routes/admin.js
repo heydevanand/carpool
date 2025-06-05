@@ -125,14 +125,13 @@ router.get('/', requireAuth, async (req, res) => {
     await ensureDBConnection();
     
     const today = moment().startOf('day');
-    const tomorrow = moment().add(1, 'day').startOf('day');
-
-    // Get today's rides
+    const tomorrow = moment().add(1, 'day').startOf('day');    // Get today's rides
     const todayRides = await Ride.find({
       departureTime: {
         $gte: today.toDate(),
         $lt: tomorrow.toDate()
-      }
+      },
+      status: { $ne: 'archived' }
     })
     .populate('origin destination')
     .sort({ departureTime: 1 });

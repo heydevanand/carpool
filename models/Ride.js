@@ -44,10 +44,9 @@ const rideSchema = new mongoose.Schema({
       type: Date,
       default: Date.now
     }
-  }],
-  status: {
+  }],  status: {
     type: String,
-    enum: ['waiting', 'in_progress', 'completed', 'cancelled'],
+    enum: ['waiting', 'in_progress', 'completed', 'cancelled', 'archived'],
     default: 'waiting'
   },
   notes: String
