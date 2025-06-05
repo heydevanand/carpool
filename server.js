@@ -82,7 +82,48 @@ const Ride = require('./models/Ride');
 // Routes
 app.use('/', require('./routes/index'));
 app.use('/api', require('./routes/api'));
-app.use('/admin', require('./routes/admin'));
+const adminRoutes = require('./routes/admin');
+app.use('/admin', adminRoutes);
+
+// Scheduled cleanup job - runs daily at 2 AM
+const scheduleCleanup = () => {
+  const runCleanup = async () => {
+    try {
+      if (adminRoutes.cleanupOldArchivedRides) {
+        const deletedCount = await adminRoutes.cleanupOldArchivedRides();
+        console.log(`Daily cleanup completed: ${deletedCount} archived rides deleted`);
+      }
+    } catch (error) {
+      console.error('Daily cleanup error:', error);
+    }
+  };
+
+  // Run cleanup immediately if it's past 2 AM today, otherwise wait until 2 AM
+  const now = new Date();
+  const today2AM = new Date();
+  today2AM.setHours(2, 0, 0, 0);
+  
+  let nextCleanup = today2AM;
+  if (now > today2AM) {
+    // If it's already past 2 AM today, schedule for tomorrow
+    nextCleanup = new Date(today2AM.getTime() + 24 * 60 * 60 * 1000);
+  }
+  
+  const timeUntilCleanup = nextCleanup.getTime() - now.getTime();
+  
+  setTimeout(() => {
+    runCleanup();
+    // Then schedule it to run every 24 hours
+    setInterval(runCleanup, 24 * 60 * 60 * 1000);
+  }, timeUntilCleanup);
+  
+  console.log(`Cleanup scheduled for: ${nextCleanup.toLocaleString()}`);
+};
+
+// Start cleanup scheduler (only in development environment)
+if (process.env.NODE_ENV !== 'production') {
+  scheduleCleanup();
+}
 
 // Start server (only in development)
 if (process.env.NODE_ENV !== 'production') {

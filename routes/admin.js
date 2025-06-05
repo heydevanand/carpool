@@ -247,4 +247,42 @@ router.post('/locations/:id/delete', requireAuth, async (req, res) => {
   }
 });
 
+// Cleanup old archived rides (older than 1 week)
+const cleanupOldArchivedRides = async () => {
+  try {
+    await ensureDBConnection();
+    
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+    
+    const result = await Ride.deleteMany({
+      status: 'archived',
+      updatedAt: { $lt: oneWeekAgo }
+    });
+    
+    console.log(`Cleaned up ${result.deletedCount} archived rides older than 1 week`);
+    return result.deletedCount;
+  } catch (error) {
+    console.error('Error cleaning up archived rides:', error);
+    return 0;
+  }
+};
+
+// Manual cleanup endpoint (for testing)
+router.post('/cleanup-archived', requireAuth, async (req, res) => {
+  try {
+    const deletedCount = await cleanupOldArchivedRides();
+    res.json({ 
+      success: true, 
+      message: `Cleaned up ${deletedCount} archived rides older than 1 week` 
+    });
+  } catch (error) {
+    console.error('Manual cleanup error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Export cleanup function for use in server
+router.cleanupOldArchivedRides = cleanupOldArchivedRides;
+
 module.exports = router;
