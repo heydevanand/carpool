@@ -1,40 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const mongoose = require('mongoose');
 const Ride = require('../models/Ride');
 const Location = require('../models/Location');
-
-// Database connection helper
-const ensureDBConnection = async () => {
-  if (mongoose.connections[0].readyState !== 1) {
-    // Wait for connection if not ready
-    await new Promise((resolve, reject) => {
-      const timeout = setTimeout(() => reject(new Error('Database connection timeout')), 10000);
-      
-      if (mongoose.connections[0].readyState === 1) {
-        clearTimeout(timeout);
-        resolve();
-        return;
-      }
-      
-      mongoose.connection.once('connected', () => {
-        clearTimeout(timeout);
-        resolve();
-      });
-      
-      mongoose.connection.once('error', (err) => {
-        clearTimeout(timeout);
-        reject(err);
-      });
-    });
-  }
-};
 
 // Get all available rides
 router.get('/rides', async (req, res) => {
   try {
-    await ensureDBConnection();
-    
     const now = new Date();
     const rides = await Ride.find({
       departureTime: { $gte: now },
@@ -52,8 +23,6 @@ router.get('/rides', async (req, res) => {
 // Create a new ride
 router.post('/rides', async (req, res) => {
   try {
-    await ensureDBConnection();
-    
     const { creatorName, creatorPhone, origin, destination, departureTime, maxPassengers, notes } = req.body;
 
     const ride = new Ride({
