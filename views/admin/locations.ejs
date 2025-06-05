@@ -66,14 +66,18 @@
                                                     <span class="badge bg-<%= location.isActive ? 'success' : 'secondary' %>">
                                                         <%= location.isActive ? 'Active' : 'Inactive' %>
                                                     </span>
-                                                </td>
-                                                <td>
-                                                    <form method="POST" action="/admin/locations/<%= location._id %>/toggle" style="display: inline;">
-                                                        <button type="submit" class="btn btn-sm btn-outline-<%= location.isActive ? 'warning' : 'success' %>">
-                                                            <i class="fas fa-<%= location.isActive ? 'pause' : 'play' %>"></i>
-                                                            <%= location.isActive ? 'Deactivate' : 'Activate' %>
+                                                </td>                                                <td>
+                                                    <div class="btn-group btn-group-sm">
+                                                        <form method="POST" action="/admin/locations/<%= location._id %>/toggle" style="display: inline;">
+                                                            <button type="submit" class="btn btn-outline-<%= location.isActive ? 'warning' : 'success' %>">
+                                                                <i class="fas fa-<%= location.isActive ? 'pause' : 'play' %>"></i>
+                                                                <%= location.isActive ? 'Deactivate' : 'Activate' %>
+                                                            </button>
+                                                        </form>
+                                                        <button class="btn btn-outline-danger" onclick="deleteLocation('<%= location._id %>', '<%= location.name %>')" title="Delete Location">
+                                                            <i class="fas fa-trash"></i> Delete
                                                         </button>
-                                                    </form>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         <% }); %>
@@ -127,5 +131,31 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        async function deleteLocation(locationId, locationName) {
+            if (!confirm(`Are you sure you want to delete "${locationName}"? This action cannot be undone and may affect existing rides.`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/admin/locations/${locationId}/delete`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    const result = await response.text();
+                    alert('Error deleting location: ' + result);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error deleting location');
+            }
+        }
+    </script>
 </body>
 </html>

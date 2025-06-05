@@ -100,24 +100,31 @@
                                             <div class="text-end">
                                                 <span class="badge bg-<%= ride.status === 'waiting' ? 'warning' : ride.status === 'in_progress' ? 'info' : ride.status === 'completed' ? 'success' : 'danger' %> status-badge">
                                                     <%= ride.status.replace('_', ' ').toUpperCase() %>
-                                                </span>
-                                                <div class="mt-2">
+                                                </span>                                                <div class="mt-2">
                                                     <div class="btn-group btn-group-sm">
                                                         <% if (ride.status === 'waiting') { %>
                                                             <button class="btn btn-outline-info" onclick="updateRideStatus('<%= ride._id %>', 'in_progress')">
-                                                                Start
+                                                                <i class="fas fa-play"></i> Start
                                                             </button>
                                                         <% } %>
                                                         <% if (ride.status === 'in_progress') { %>
                                                             <button class="btn btn-outline-success" onclick="updateRideStatus('<%= ride._id %>', 'completed')">
-                                                                Complete
+                                                                <i class="fas fa-check"></i> Complete
+                                                            </button>
+                                                        <% } %>
+                                                        <% if (ride.status === 'completed') { %>
+                                                            <button class="btn btn-outline-success" disabled>
+                                                                <i class="fas fa-check-circle"></i> Done
                                                             </button>
                                                         <% } %>
                                                         <% if (ride.status !== 'completed' && ride.status !== 'cancelled') { %>
-                                                            <button class="btn btn-outline-danger" onclick="updateRideStatus('<%= ride._id %>', 'cancelled')">
-                                                                Cancel
+                                                            <button class="btn btn-outline-warning" onclick="updateRideStatus('<%= ride._id %>', 'cancelled')">
+                                                                <i class="fas fa-times"></i> Cancel
                                                             </button>
                                                         <% } %>
+                                                        <button class="btn btn-outline-danger" onclick="deleteRide('<%= ride._id %>')" title="Delete Ride">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
                                                     </div>
                                                 </div>
                                             </div>
@@ -170,8 +177,7 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>    <script>
         async function updateRideStatus(rideId, status) {
             try {
                 const response = await fetch(`/api/rides/${rideId}/status`, {
@@ -190,7 +196,32 @@
             } catch (error) {
                 console.error('Error:', error);
                 alert('Error updating ride status');
-            }        }
+            }
+        }
+
+        async function deleteRide(rideId) {
+            if (!confirm('Are you sure you want to delete this ride? This action cannot be undone.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/rides/${rideId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    alert('Error deleting ride');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error deleting ride');
+            }
+        }
     </script>
 
     <!-- Footer -->

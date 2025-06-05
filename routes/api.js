@@ -122,4 +122,22 @@ router.put('/rides/:id/status', async (req, res) => {
   }
 });
 
+// Delete a ride
+router.delete('/rides/:id', async (req, res) => {
+  try {
+    await ensureDBConnection();
+    
+    const ride = await Ride.findByIdAndDelete(req.params.id);
+    
+    if (!ride) {
+      return res.status(404).json({ error: 'Ride not found' });
+    }
+
+    res.json({ success: true, message: 'Ride deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting ride:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;

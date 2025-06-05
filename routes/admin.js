@@ -218,4 +218,34 @@ router.post('/locations/:id/toggle', requireAuth, async (req, res) => {
   }
 });
 
+// Delete location
+router.post('/locations/:id/delete', requireAuth, async (req, res) => {
+  try {
+    await ensureDBConnection();
+    
+    // Check if location is being used in any rides
+    const ridesUsingLocation = await Ride.find({
+      $or: [
+        { origin: req.params.id },
+        { destination: req.params.id }
+      ]
+    });
+
+    if (ridesUsingLocation.length > 0) {
+      return res.status(400).send('Cannot delete location as it is being used in existing rides. Please cancel or complete those rides first.');
+    }
+
+    const location = await Location.findByIdAndDelete(req.params.id);
+    
+    if (!location) {
+      return res.status(404).send('Location not found');
+    }
+
+    res.redirect('/admin/locations');
+  } catch (error) {
+    console.error('Delete location error:', error);
+    res.status(500).send('Server Error: ' + error.message);
+  }
+});
+
 module.exports = router;
