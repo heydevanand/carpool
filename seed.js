@@ -5,13 +5,13 @@ const MONGODB_URI = 'mongodb+srv://heydevanand:engineerdev@dev-cluster.okxr9gy.m
 
 const sampleLocations = [
   {
-    name: 'PG Main Gate',
-    address: 'Main entrance of the PG building',
+    name: 'JS Palace Main Gate',
+    address: 'Main entrance of JS Palace PG',
     coordinates: { lat: 12.9716, lng: 77.5946 },
     isActive: true
   },
   {
-    name: 'Tech Park Gate 1',
+    name: 'Manyata Tech Park Gate 1',
     address: 'Manyata Tech Park, Main Gate 1, Bangalore',
     coordinates: { lat: 13.0475, lng: 77.6212 },
     isActive: true
@@ -35,21 +35,33 @@ const sampleLocations = [
     isActive: true
   },
   {
-    name: 'HSR Layout',
+    name: 'HSR Layout Sector 1',
     address: 'HSR Layout Sector 1, Bangalore',
     coordinates: { lat: 12.9082, lng: 77.6476 },
     isActive: true
   },
   {
-    name: 'Indiranagar Metro',
+    name: 'Indiranagar Metro Station',
     address: 'Indiranagar Metro Station, Bangalore',
     coordinates: { lat: 12.9719, lng: 77.6412 },
     isActive: true
   },
   {
     name: 'Brigade Road',
-    address: 'Brigade Road, Bangalore',
+    address: 'Brigade Road, Commercial Street Area, Bangalore',
     coordinates: { lat: 12.9716, lng: 77.6197 },
+    isActive: true
+  },
+  {
+    name: 'Bangalore Airport',
+    address: 'Kempegowda International Airport, Bangalore',
+    coordinates: { lat: 13.1986, lng: 77.7066 },
+    isActive: true
+  },
+  {
+    name: 'Majestic Bus Station',
+    address: 'Kempegowda Bus Station, Majestic, Bangalore',
+    coordinates: { lat: 12.9762, lng: 77.5713 },
     isActive: true
   }
 ];

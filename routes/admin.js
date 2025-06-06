@@ -119,32 +119,94 @@ router.get('/logout', (req, res) => {
   });
 });
 
+// Auto-archive past rides function
+const autoArchivePastRides = async () => {
+  try {
+    const now = new Date();
+    
+    // Find rides that are past their departure time and not yet archived
+    const pastRides = await Ride.find({
+      departureTime: { $lt: now },
+      status: { $in: ['waiting', 'in_progress', 'completed', 'cancelled'] }
+    });
+    
+    if (pastRides.length > 0) {
+      // Auto-archive past rides
+      await Ride.updateMany(
+        {
+          departureTime: { $lt: now },
+          status: { $in: ['waiting', 'in_progress', 'completed', 'cancelled'] }
+        },
+        { 
+          status: 'archived',
+          updatedAt: new Date()
+        }
+      );
+      
+      console.log(`Auto-archived ${pastRides.length} past rides`);
+    }
+    
+    return pastRides.length;
+  } catch (error) {
+    console.error('Auto-archive error:', error);
+    return 0;
+  }
+};
+
 // Admin dashboard
 router.get('/', requireAuth, async (req, res) => {
   try {
     await ensureDBConnection();
     
+    // Auto-archive past rides before loading dashboard
+    await autoArchivePastRides();
+    
     const today = moment().startOf('day');
-    const tomorrow = moment().add(1, 'day').startOf('day');    // Get today's rides
-    const todayRides = await Ride.find({
-      departureTime: {
-        $gte: today.toDate(),
-        $lt: tomorrow.toDate()
-      },
-      status: { $ne: 'archived' }
+    const tomorrow = moment().add(1, 'day').startOf('day');    // Get all upcoming rides (only future rides and current in-progress rides)
+    const upcomingRidesRaw = await Ride.find({
+      $or: [
+        { departureTime: { $gte: new Date() } },
+        { status: 'in_progress' }
+      ],
+      status: { $in: ['waiting', 'in_progress', 'completed'] }
     })
     .populate('origin destination')
     .sort({ departureTime: 1 });
 
-    // Get all upcoming rides
-    const upcomingRides = await Ride.find({
-      departureTime: { $gte: new Date() },
-      status: { $in: ['waiting', 'in_progress'] }
+    // Get archived rides (last 30 days)
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    const archivedRidesRaw = await Ride.find({
+      status: 'archived',
+      updatedAt: { $gte: thirtyDaysAgo }
     })
     .populate('origin destination')
-    .sort({ departureTime: 1 });    res.render('admin/dashboard', {
-      todayRides,
+    .sort({ departureTime: -1 });
+
+    // Filter out orphaned rides and clean them up
+    const upcomingRides = upcomingRidesRaw.filter(ride => 
+      ride.origin && ride.destination && ride.origin.name && ride.destination.name
+    );
+
+    const archivedRides = archivedRidesRaw.filter(ride => 
+      ride.origin && ride.destination && ride.origin.name && ride.destination.name
+    );
+
+    // Clean up orphaned rides
+    const allOrphanedRides = [...upcomingRidesRaw, ...archivedRidesRaw].filter(ride => 
+      !ride.origin || !ride.destination || !ride.origin.name || !ride.destination.name
+    );
+    
+    if (allOrphanedRides.length > 0) {
+      console.log(`Admin: Found ${allOrphanedRides.length} orphaned rides, cleaning up...`);
+      const orphanedIds = allOrphanedRides.map(ride => ride._id);
+      await Ride.deleteMany({ _id: { $in: orphanedIds } });
+    }
+
+    res.render('admin/dashboard', {
       upcomingRides,
+      archivedRides,
       moment,
       admin: req.session.admin
     });
@@ -222,16 +284,49 @@ router.post('/locations/:id/delete', requireAuth, async (req, res) => {
   try {
     await ensureDBConnection();
     
-    // Check if location is being used in any rides
-    const ridesUsingLocation = await Ride.find({
+    // First, cleanup any orphaned rides
+    const allRides = await Ride.find({}).populate('origin destination');
+    const orphanedRides = allRides.filter(ride => 
+      !ride.origin || !ride.destination
+    );
+    
+    if (orphanedRides.length > 0) {
+      const orphanedIds = orphanedRides.map(ride => ride._id);
+      await Ride.deleteMany({ _id: { $in: orphanedIds } });
+      console.log(`Cleaned up ${orphanedRides.length} orphaned rides before location deletion`);
+    }
+    
+    // Check if location is being used in any active rides (excluding archived and cancelled)
+    const activeRidesUsingLocation = await Ride.find({
       $or: [
         { origin: req.params.id },
         { destination: req.params.id }
-      ]
+      ],
+      status: { $in: ['waiting', 'in_progress'] }
     });
 
-    if (ridesUsingLocation.length > 0) {
-      return res.status(400).send('Cannot delete location as it is being used in existing rides. Please cancel or complete those rides first.');
+    if (activeRidesUsingLocation.length > 0) {
+      return res.status(400).send(`Cannot delete location as it is being used in ${activeRidesUsingLocation.length} active rides. Please cancel or complete those rides first.`);
+    }
+
+    // Clean up completed and archived rides using this location (they're historical, can be removed)
+    const historicalRidesUsingLocation = await Ride.find({
+      $or: [
+        { origin: req.params.id },
+        { destination: req.params.id }
+      ],
+      status: { $in: ['completed', 'archived', 'cancelled'] }
+    });
+
+    if (historicalRidesUsingLocation.length > 0) {
+      await Ride.deleteMany({
+        $or: [
+          { origin: req.params.id },
+          { destination: req.params.id }
+        ],
+        status: { $in: ['completed', 'archived', 'cancelled'] }
+      });
+      console.log(`Cleaned up ${historicalRidesUsingLocation.length} historical rides for location deletion`);
     }
 
     const location = await Location.findByIdAndDelete(req.params.id);
@@ -240,7 +335,7 @@ router.post('/locations/:id/delete', requireAuth, async (req, res) => {
       return res.status(404).send('Location not found');
     }
 
-    res.redirect('/admin/locations');
+    res.redirect('/admin/locations?message=Location deleted successfully along with historical rides');
   } catch (error) {
     console.error('Delete location error:', error);
     res.status(500).send('Server Error: ' + error.message);
@@ -282,7 +377,59 @@ router.post('/cleanup-archived', requireAuth, async (req, res) => {
   }
 });
 
-// Export cleanup function for use in server
+// Clean up orphaned rides endpoint
+router.post('/cleanup-orphaned', requireAuth, async (req, res) => {
+  try {
+    await ensureDBConnection();
+    
+    let cleanupSummary = {
+      orphanedRides: 0,
+      oldArchivedRides: 0,
+      totalCleaned: 0
+    };
+    
+    // Find all rides and populate locations
+    const allRides = await Ride.find({}).populate('origin destination');
+    
+    // Find orphaned rides (rides with missing locations)
+    const orphanedRides = allRides.filter(ride => 
+      !ride.origin || !ride.destination
+    );
+    
+    if (orphanedRides.length > 0) {
+      const orphanedIds = orphanedRides.map(ride => ride._id);
+      await Ride.deleteMany({ _id: { $in: orphanedIds } });
+      cleanupSummary.orphanedRides = orphanedRides.length;
+      console.log(`Cleaned up ${orphanedRides.length} orphaned rides`);
+    }
+    
+    // Clean up old archived rides (older than 30 days)
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    const oldArchivedResult = await Ride.deleteMany({
+      status: 'archived',
+      updatedAt: { $lt: thirtyDaysAgo }
+    });
+    
+    cleanupSummary.oldArchivedRides = oldArchivedResult.deletedCount;
+    cleanupSummary.totalCleaned = cleanupSummary.orphanedRides + cleanupSummary.oldArchivedRides;
+    
+    console.log(`Total cleanup: ${cleanupSummary.totalCleaned} rides removed`);
+    
+    res.json({ 
+      success: true, 
+      message: `Database cleanup completed! Removed ${cleanupSummary.orphanedRides} orphaned rides and ${cleanupSummary.oldArchivedRides} old archived rides. Total: ${cleanupSummary.totalCleaned} rides cleaned.`,
+      summary: cleanupSummary
+    });
+  } catch (error) {
+    console.error('Orphaned cleanup error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Export cleanup functions for use in server
 router.cleanupOldArchivedRides = cleanupOldArchivedRides;
+router.autoArchivePastRides = autoArchivePastRides;
 
 module.exports = router;

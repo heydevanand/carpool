@@ -1,16 +1,16 @@
-# PG Carpool Management System
+# JS Palace Carpool Management System
 
-A minimal yet functional web application for managing carpooling services at a PG (Paying Guest) accommodation.
+A minimal yet functional web application for managing carpooling services at JS Palace PG accommodation.
 
 ## Features
 
 ### For Residents:
 - **View Available Rides**: See all upcoming rides with departure times, routes, and available seats
 - **Join Existing Rides**: Join rides that have available space
-- **Create New Rides**: Create a ride when no suitable option exists
+- **Create New Rides**: Create a ride when no suitable option exists (you become the first passenger automatically)
 - **Real-time Updates**: Automatic refresh every 30 seconds to show latest rides
 
-### For PG Service Provider (Admin):
+### For JS Palace Service Provider (Admin):
 - **Dashboard**: View today's rides and upcoming rides
 - **Ride Management**: Update ride status (start, complete, cancel)
 - **Location Management**: Add/edit/activate/deactivate pickup/drop locations

@@ -13,7 +13,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const minDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
     document.getElementById('departureTime').min = minDateTime;
     
-    refreshRides();
+    // Don't auto-refresh on page load - use server-rendered content
+    // refreshRides();
 });
 
 // Create ride form submission
@@ -21,13 +22,11 @@ document.getElementById('create-ride-form').addEventListener('submit', async fun
     e.preventDefault();
 
     const formData = {
-        creatorName: document.getElementById('creatorName').value,
-        creatorPhone: document.getElementById('creatorPhone').value,
+        passengerName: document.getElementById('passengerName').value,
+        passengerPhone: document.getElementById('passengerPhone').value,
         origin: document.getElementById('origin').value,
         destination: document.getElementById('destination').value,
-        departureTime: document.getElementById('departureTime').value,
-        maxPassengers: document.getElementById('maxPassengers').value,
-        notes: document.getElementById('notes').value
+        departureTime: document.getElementById('departureTime').value
     };
 
     // Validation
@@ -48,15 +47,16 @@ document.getElementById('create-ride-form').addEventListener('submit', async fun
         const result = await response.json();
 
         if (response.ok) {
-            alert('Ride created successfully!');
+            const message = result.message || 'Ride request submitted successfully!';
+            alert(message);
             document.getElementById('create-ride-form').reset();
             refreshRides();
         } else {
-            alert('Error creating ride: ' + result.error);
+            alert('Error creating ride request: ' + result.error);
         }
     } catch (error) {
         console.error('Error:', error);
-        alert('Error creating ride. Please try again.');
+        alert('Error creating ride request. Please try again.');
     }
 });
 
@@ -69,8 +69,8 @@ function joinRide(rideId) {
 
 // Confirm join ride
 async function confirmJoinRide() {
-    const passengerName = document.getElementById('passengerName').value;
-    const passengerPhone = document.getElementById('passengerPhone').value;
+    const passengerName = document.getElementById('joinPassengerName').value;
+    const passengerPhone = document.getElementById('joinPassengerPhone').value;
 
     if (!passengerName || !passengerPhone) {
         alert('Please fill in all fields!');
@@ -89,16 +89,14 @@ async function confirmJoinRide() {
             })
         });
 
-        const result = await response.json();
-
-        if (response.ok) {
-            alert('Successfully joined the ride!');
+        const result = await response.json();        if (response.ok) {
+            alert('Successfully joined the trip request!');
             document.getElementById('join-ride-form').reset();
             const modal = bootstrap.Modal.getInstance(document.getElementById('joinRideModal'));
             modal.hide();
             refreshRides();
         } else {
-            alert('Error joining ride: ' + result.error);
+            alert('Error joining trip: ' + result.error);
         }
     } catch (error) {
         console.error('Error:', error);
@@ -113,33 +111,29 @@ async function refreshRides() {
         const rides = await response.json();
 
         const container = document.getElementById('rides-container');
-        
-        if (rides.length === 0) {
+          if (rides.length === 0) {
             container.innerHTML = `
                 <div class="alert alert-info">
-                    <i class="fas fa-info-circle"></i> No rides available at the moment.
+                    <i class="fas fa-info-circle"></i> No ride requests at the moment. Be the first to request one!
                 </div>
             `;
             return;
         }        container.innerHTML = rides.map(ride => {
             const departureTime = new Date(ride.departureTime);
-            const availableSeats = ride.maxPassengers - ride.passengers.length;
-            const isAvailable = availableSeats > 0;
 
             return `
-                <div class="card ride-card ${isAvailable ? 'available' : 'full'}">
+                <div class="card ride-card available">
                     <div class="card-body">
                         <div class="row align-items-center">
-                            <div class="col-md-8">
-                                <div class="d-flex align-items-center mb-2">
-                                    <span class="badge bg-primary time-badge me-2">
-                                        ${departureTime.toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit'})}
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center mb-2">                                    <span class="badge bg-primary time-badge me-2">
+                                        ${departureTime.toLocaleTimeString('en-US', {hour: 'numeric', minute:'2-digit', hour12: true, timeZone: 'UTC'})}
                                     </span>
                                     <small class="text-muted">
-                                        ${departureTime.toLocaleDateString('en-US', {month: 'short', day: 'numeric'})}
+                                        ${departureTime.toLocaleDateString('en-US', {month: 'short', day: 'numeric', timeZone: 'UTC'})}
                                     </small>
                                 </div>
-                                <div class="route-info mb-2">
+                                <div class="route-info">
                                     <div class="location-text">
                                         <i class="fas fa-map-marker-alt text-success"></i>
                                         <strong>From:</strong> ${ride.origin.name}
@@ -148,55 +142,42 @@ async function refreshRides() {
                                         <i class="fas fa-map-marker-alt text-danger"></i>
                                         <strong>To:</strong> ${ride.destination.name}
                                     </div>
-                                </div>                                ${ride.passengers.length > 0 ? `
-                                    <div class="contact-info">
-                                        <div class="passengers-info">
-                                            <small class="text-muted">
-                                                <i class="fas fa-users"></i> <strong>Passengers:</strong>
-                                            </small>
-                                            ${ride.passengers.map(passenger => `
-                                                <div class="ms-3">
-                                                    <small class="text-muted">
-                                                        ${passenger.name} 
-                                                        <a href="tel:${passenger.phone}" class="text-decoration-none">
-                                                            <i class="fas fa-phone"></i> ${passenger.phone}
-                                                        </a>
-                                                    </small>
-                                                </div>
-                                            `).join('')}
-                                        </div>
-                                    </div>
-                                ` : ''}
+                                </div>
                             </div>
-                            <div class="col-md-2">
+                            <div class="col-md-3">
                                 <div class="text-center">
                                     <div class="passenger-count">
                                         <i class="fas fa-users"></i>
-                                        ${ride.passengers.length}/${ride.maxPassengers}
+                                        ${ride.passengers.length} interested
                                     </div>
                                     <small class="text-muted">
-                                        ${availableSeats} seats left
+                                        Join this trip!
                                     </small>
                                 </div>
                             </div>
-                            <div class="col-md-2">
-                                ${isAvailable ? 
-                                    `<button class="btn btn-primary btn-sm w-100" onclick="joinRide('${ride._id}')">
-                                        <i class="fas fa-plus"></i> Join Ride
-                                    </button>` : 
-                                    `<button class="btn btn-secondary btn-sm w-100" disabled>
-                                        <i class="fas fa-times"></i> Full
-                                    </button>`
-                                }
+                            <div class="col-md-3">
+                                <button class="btn btn-primary btn-sm w-100" onclick="joinRide('${ride._id}')">
+                                    <i class="fas fa-plus"></i> Join Trip
+                                </button>
                             </div>
-                        </div>
-                        ${ride.notes ? 
-                            `<div class="mt-2">
+                        </div>                        ${ride.passengers.length > 0 ? `
+                            <div class="passengers-info mt-2">
                                 <small class="text-muted">
-                                    <i class="fas fa-sticky-note"></i> ${ride.notes}
-                                </small>
-                            </div>` : ''
-                        }
+                                    <i class="fas fa-users"></i> Passengers:
+                                </small>                                ${ride.passengers.map(passenger => {
+                                    const cleanPhone = passenger.phone.replace(/[^0-9]/g, '').slice(-10);
+                                    return `
+                                    <div class="ms-3 mb-1">
+                                        <small>• ${passenger.name}</small>
+                                        <br>
+                                        <small class="ms-3 text-muted">
+                                            <i class="fas fa-phone text-success me-1" style="font-size: 0.7rem;"></i>
+                                            <a href="tel:${cleanPhone}" class="phone-link">${cleanPhone}</a>
+                                        </small>
+                                    </div>
+                                `}).join('')}
+                            </div>
+                        ` : ''}
                     </div>
                 </div>
             `;
@@ -208,5 +189,5 @@ async function refreshRides() {
     }
 }
 
-// Auto-refresh rides every 30 seconds
-setInterval(refreshRides, 30000);
+// Auto-refresh rides every 2 minutes instead of 30 seconds
+setInterval(refreshRides, 120000);

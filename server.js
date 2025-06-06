@@ -89,9 +89,16 @@ app.use('/admin', adminRoutes);
 const scheduleCleanup = () => {
   const runCleanup = async () => {
     try {
+      // First, auto-archive past rides
+      if (adminRoutes.autoArchivePastRides) {
+        const archivedCount = await adminRoutes.autoArchivePastRides();
+        console.log(`Daily auto-archive completed: ${archivedCount} past rides archived`);
+      }
+      
+      // Then, cleanup old archived rides
       if (adminRoutes.cleanupOldArchivedRides) {
         const deletedCount = await adminRoutes.cleanupOldArchivedRides();
-        console.log(`Daily cleanup completed: ${deletedCount} archived rides deleted`);
+        console.log(`Daily cleanup completed: ${deletedCount} old archived rides deleted`);
       }
     } catch (error) {
       console.error('Daily cleanup error:', error);
@@ -124,6 +131,29 @@ const scheduleCleanup = () => {
 if (process.env.NODE_ENV !== 'production') {
   scheduleCleanup();
 }
+
+// Auto-archiving interval - runs every 10 minutes
+const startAutoArchiving = () => {
+  const runAutoArchive = async () => {
+    try {
+      if (adminRoutes.autoArchivePastRides) {
+        const archivedCount = await adminRoutes.autoArchivePastRides();
+        if (archivedCount > 0) {
+          console.log(`Auto-archived ${archivedCount} past rides`);
+        }
+      }
+    } catch (error) {
+      console.error('Auto-archive error:', error);
+    }
+  };
+
+  // Run auto-archive every 10 minutes
+  setInterval(runAutoArchive, 10 * 60 * 1000); // 10 minutes
+  console.log('Auto-archiving started (runs every 10 minutes)');
+};
+
+// Start auto-archiving
+startAutoArchiving();
 
 // Start server (only in development)
 if (process.env.NODE_ENV !== 'production') {

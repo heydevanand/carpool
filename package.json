@@ -1,7 +1,7 @@
 {
-  "name": "pg-carpool",
+  "name": "js-palace-carpool",
   "version": "1.0.0",
-  "description": "Carpool management system for PG residents",
+  "description": "Carpool management system for JS Palace PG residents",
   "main": "server.js",  "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
