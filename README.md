@@ -1,20 +1,24 @@
 # JS Palace Carpool Management System
 
-A minimal yet functional web application for managing carpooling services at JS Palace PG accommodation.
+A smart PG ↔ Office transportation system with GPS-based location detection and automatic ride archiving.
 
 ## Features
 
 ### For Residents:
-- **View Available Rides**: See all upcoming rides with departure times, routes, and available seats
-- **Join Existing Rides**: Join rides that have available space
-- **Create New Rides**: Create a ride when no suitable option exists (you become the first passenger automatically)
-- **Real-time Updates**: Automatic refresh every 30 seconds to show latest rides
+- **GPS Auto-Detection**: Automatically detects if you're at PG or Office and suggests journey type
+- **Smart Journey Types**: 
+  - TO Office (Morning): From PG to various office locations
+  - FROM Office (Evening): From office back to PG
+- **Dynamic Field Labels**: "Drop Location" for morning trips, "Pickup Location" for evening trips
+- **15-Minute Time Slots**: Available between 8:00 AM - 8:00 PM in 15-minute intervals
+- **Real-time Updates**: Automatic refresh and live ride status
+- **Auto-Archiving**: Past rides automatically archived to keep interface clean
 
-### For JS Palace Service Provider (Admin):
-- **Dashboard**: View today's rides and upcoming rides
-- **Ride Management**: Update ride status (start, complete, cancel)
-- **Location Management**: Add/edit/activate/deactivate pickup/drop locations
-- **Passenger Details**: View all passengers for each ride
+### For Admins:
+- **Clean Dashboard**: Shows only future or current rides (archived rides hidden)
+- **Single Delete Action**: One "Delete" button per ride that archives instead of permanently deleting
+- **Location Management**: Manage PG and office locations
+- **Automatic Cleanup**: System automatically cleans up old archived rides
 
 ## Key Benefits
 
@@ -26,9 +30,10 @@ A minimal yet functional web application for managing carpooling services at JS 
 ## Technology Stack
 
 - **Backend**: Node.js, Express.js
-- **Database**: MongoDB with Mongoose
-- **Frontend**: EJS templates, Bootstrap 5, Vanilla JavaScript
-- **Real-time**: Auto-refresh functionality
+- **Database**: MongoDB Atlas with auto-archiving
+- **Frontend**: EJS templates, Bootstrap 5, GPS-enabled JavaScript
+- **GPS Integration**: HTML5 Geolocation API with PG proximity detection
+- **Time Management**: Moment.js for UTC time handling
 
 ## Setup Instructions
 
@@ -37,16 +42,21 @@ A minimal yet functional web application for managing carpooling services at JS 
    npm install
    ```
 
-2. **Seed Database** (add initial locations):
+2. **Setup Locations** (add PG and office locations):
    ```bash
-   npm run seed
+   npm run setup-locations
    ```
 
-3. **Start the Application**:
+3. **Create Admin User**:
+   ```bash
+   npm run create-admin
+   ```
+
+4. **Start the Application**:
    ```bash
    npm start
    ```
-   Or for development with auto-restart:
+   Or for development:
    ```bash
    npm run dev
    ```
@@ -60,33 +70,38 @@ A minimal yet functional web application for managing carpooling services at JS 
 
 The application is configured to use MongoDB Atlas with the provided connection string. The database name is `pg-carpool`.
 
-## Default Locations
+## Current Locations
 
-The seed script adds the following sample locations:
-- PG Main Gate
-- Tech Park Gate 1
-- Electronic City Metro
-- Koramangala BDA Complex
-- Whitefield Railway Station
-- HSR Layout
-- Indiranagar Metro
-- Brigade Road
+### PG Locations:
+- **Nayi PG**: GPS coordinates for automatic detection
+- **Puraani PG**: GPS coordinates for automatic detection
+
+### Office Locations:
+- ABC Gol Chakkar
+- ABC Theka  
+- Advant
+- Branch Office
+- Candor Gate No. 3
+- Corporate Office
+- Main Office
 
 ## Usage Workflow
 
 ### For Residents:
-1. Open the website
-2. Check if any available ride matches your time and route
-3. If yes, join the ride by providing your name and phone
-4. If no suitable ride exists, create a new ride
-5. Wait for others to join your ride
+1. Open the website (GPS will auto-detect your location)
+2. Journey type will be suggested based on your location:
+   - Near PG → "TO Office" with drop location selection
+   - Away from PG → "FROM Office" with pickup location selection
+3. Select your preferred date/time (15-minute intervals, 8 AM - 8 PM)
+4. Submit ride request or join existing rides
+5. View passenger contact information for coordination
 
-### For PG Service Provider:
-1. Open admin dashboard to see all rides
-2. Monitor ride status and passenger count
-3. Start rides when it's time for departure
-4. Mark rides as completed after drop-off
-5. Manage locations as needed through the admin panel
+### For Admins:
+1. Login to admin dashboard at `/admin`
+2. View only future/current rides (past rides auto-archived)
+3. Use single "Delete" button to archive rides
+4. Manage locations through admin panel
+5. System automatically cleans up old data
 
 ## API Endpoints
 
@@ -98,28 +113,33 @@ The seed script adds the following sample locations:
 ## File Structure
 
 ```
-├── server.js              # Main application server
+├── server.js              # Main application server with auto-archiving
 ├── package.json           # Dependencies and scripts
-├── seed.js               # Database seeding script
+├── create-admin.js        # Admin user creation utility
+├── setup-locations.js     # PG and office location setup
 ├── models/               # MongoDB models
+│   ├── Admin.js          # Admin user model
 │   ├── Location.js       # Location model
-│   └── Ride.js          # Ride model
+│   └── Ride.js          # Ride model with auto-archiving
 ├── routes/              # Express routes
 │   ├── index.js         # User-facing routes
-│   ├── api.js           # API endpoints
-│   └── admin.js         # Admin routes
+│   ├── api.js           # API endpoints with auto-archiving
+│   └── admin.js         # Admin routes with cleanup functions
 ├── views/               # EJS templates
-│   ├── index.ejs        # Main user interface
+│   ├── index.ejs        # Main GPS-enabled interface
 │   └── admin/           # Admin templates
+│       ├── dashboard.ejs # Clean admin dashboard
+│       ├── locations.ejs # Location management
+│       └── login.ejs    # Admin login
 └── public/              # Static assets
-    └── js/main.js       # Frontend JavaScript
+    └── js/main.js       # GPS detection and UI logic
 ```
 
-## Future Enhancements
+## Key Features Implemented
 
-- Push notifications for ride updates
-- GPS integration for automatic location detection
-- Payment integration
-- Ride history and analytics
-- Mobile app version
-- SMS notifications
+- **Auto-Archiving**: Rides automatically archived 10 minutes after departure time
+- **GPS Detection**: 500m radius detection for PG locations with auto-journey-type selection
+- **Clean UI**: Hidden PG selection (auto-selected), dynamic field labels
+- **Time Restrictions**: 8 AM - 8 PM only, 15-minute intervals
+- **Admin Cleanup**: Single delete button, automatic old data cleanup
+- **Timezone Handling**: UTC time display to prevent timezone shifts

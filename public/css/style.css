@@ -1,0 +1,141 @@
+/* Carpool App Styles */
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.container {
+    flex: 1;
+}
+
+/* Ride Cards */
+.ride-card {
+    border-left: 4px solid #007bff;
+    margin-bottom: 1rem;
+    transition: box-shadow 0.2s ease;
+}
+
+.ride-card:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.ride-card.full {
+    border-left-color: #dc3545;
+}
+
+.ride-card.available {
+    border-left-color: #28a745;
+}
+
+/* Typography */
+.time-badge {
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.location-text {
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+/* Components */
+.passenger-count {
+    background: #f8f9fa;
+    border-radius: 20px;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.8rem;
+}
+
+.contact-info {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.contact-info a {
+    color: #28a745;
+    text-decoration: none;
+}
+
+.contact-info a:hover {
+    color: #1e7e34;
+    text-decoration: underline;
+}
+
+/* Passenger Info */
+.passengers-info {
+    padding-top: 0.25rem;
+}
+
+.passengers-info .ms-3 {
+    border-left: 2px solid #e9ecef;
+    padding-left: 0.5rem;
+    margin-bottom: 0.25rem;
+}
+
+.phone-link {
+    color: #007bff;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.phone-link:hover {
+    color: #0056b3;
+    text-decoration: underline;
+}
+
+/* Performance optimizations */
+* {
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+/* Optimize animations for GPU */
+.btn, .ride-card, .phone-link {
+    will-change: transform;
+    backface-visibility: hidden;
+}
+
+/* Lazy loading optimization */
+.ride-card {
+    contain: layout style paint;
+}
+
+/* Reduce repaints */
+.passenger-count, .time-badge {
+    contain: layout style;
+}
+
+/* Loading states */
+.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+/* Form improvements */
+.form-control:focus,
+.form-select:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+    .ride-card .row {
+        text-align: center;
+    }
+    
+    .ride-card .col-md-3 {
+        margin-top: 0.5rem;
+    }
+    
+    .passengers-info {
+        margin-top: 1rem;
+        text-align: left;
+    }
+}

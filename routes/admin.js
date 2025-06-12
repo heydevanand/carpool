@@ -87,17 +87,13 @@ router.post('/login', async (req, res) => {
     
     // Update last login
     await admin.updateLastLogin();
-    
-    // Create session
+      // Create session
     req.session.admin = {
       id: admin._id,
       username: admin.username,
       email: admin.email,
       role: admin.role
     };
-    
-    console.log('Session created for admin:', admin.username);
-    console.log('Redirecting to /admin');
     
     res.redirect('/admin');
   } catch (error) {
@@ -197,9 +193,7 @@ router.get('/', requireAuth, async (req, res) => {
     const allOrphanedRides = [...upcomingRidesRaw, ...archivedRidesRaw].filter(ride => 
       !ride.origin || !ride.destination || !ride.origin.name || !ride.destination.name
     );
-    
-    if (allOrphanedRides.length > 0) {
-      console.log(`Admin: Found ${allOrphanedRides.length} orphaned rides, cleaning up...`);
+      if (allOrphanedRides.length > 0) {
       const orphanedIds = allOrphanedRides.map(ride => ride._id);
       await Ride.deleteMany({ _id: { $in: orphanedIds } });
     }
@@ -289,11 +283,9 @@ router.post('/locations/:id/delete', requireAuth, async (req, res) => {
     const orphanedRides = allRides.filter(ride => 
       !ride.origin || !ride.destination
     );
-    
-    if (orphanedRides.length > 0) {
+      if (orphanedRides.length > 0) {
       const orphanedIds = orphanedRides.map(ride => ride._id);
       await Ride.deleteMany({ _id: { $in: orphanedIds } });
-      console.log(`Cleaned up ${orphanedRides.length} orphaned rides before location deletion`);
     }
     
     // Check if location is being used in any active rides (excluding archived and cancelled)
@@ -318,15 +310,13 @@ router.post('/locations/:id/delete', requireAuth, async (req, res) => {
       status: { $in: ['completed', 'archived', 'cancelled'] }
     });
 
-    if (historicalRidesUsingLocation.length > 0) {
-      await Ride.deleteMany({
+    if (historicalRidesUsingLocation.length > 0) {      await Ride.deleteMany({
         $or: [
           { origin: req.params.id },
           { destination: req.params.id }
         ],
         status: { $in: ['completed', 'archived', 'cancelled'] }
       });
-      console.log(`Cleaned up ${historicalRidesUsingLocation.length} historical rides for location deletion`);
     }
 
     const location = await Location.findByIdAndDelete(req.params.id);
@@ -354,8 +344,7 @@ const cleanupOldArchivedRides = async () => {
       status: 'archived',
       updatedAt: { $lt: oneWeekAgo }
     });
-    
-    console.log(`Cleaned up ${result.deletedCount} archived rides older than 1 week`);
+      console.log(`Cleaned up ${result.deletedCount} archived rides older than 1 week`);
     return result.deletedCount;
   } catch (error) {
     console.error('Error cleaning up archived rides:', error);
@@ -395,12 +384,10 @@ router.post('/cleanup-orphaned', requireAuth, async (req, res) => {
     const orphanedRides = allRides.filter(ride => 
       !ride.origin || !ride.destination
     );
-    
-    if (orphanedRides.length > 0) {
+      if (orphanedRides.length > 0) {
       const orphanedIds = orphanedRides.map(ride => ride._id);
       await Ride.deleteMany({ _id: { $in: orphanedIds } });
       cleanupSummary.orphanedRides = orphanedRides.length;
-      console.log(`Cleaned up ${orphanedRides.length} orphaned rides`);
     }
     
     // Clean up old archived rides (older than 30 days)
@@ -411,11 +398,8 @@ router.post('/cleanup-orphaned', requireAuth, async (req, res) => {
       status: 'archived',
       updatedAt: { $lt: thirtyDaysAgo }
     });
-    
-    cleanupSummary.oldArchivedRides = oldArchivedResult.deletedCount;
+      cleanupSummary.oldArchivedRides = oldArchivedResult.deletedCount;
     cleanupSummary.totalCleaned = cleanupSummary.orphanedRides + cleanupSummary.oldArchivedRides;
-    
-    console.log(`Total cleanup: ${cleanupSummary.totalCleaned} rides removed`);
     
     res.json({ 
       success: true, 
